@@ -1,0 +1,15 @@
+
+#En esta seccion se especifican los archivos de entrada, salida y atributos
+[archivos]
+entrada: alameda.xlsx
+referencias: referencias.xls
+salida: ../salida/demandas.xls
+
+#En esta seccion se especifican los datos basicos para el procesamiento de la
+#planilla de entrada
+[basicos]
+sede: SEDE
+escuela: ESCUELA
+regimen: REGIMEN
+semanas: 18
+
