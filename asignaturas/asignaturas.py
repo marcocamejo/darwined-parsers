@@ -314,6 +314,9 @@ def escribir_encabezado(arreglo, bloques, salas, semanas, hoja, fila):
 def procesar_planilla(planilla, hoja_salida, bloques, atributos, output_row, settings, optativo):
     """ Procesa una planilla de plan de estudio o de optativos"""
 
+    #registros procesados
+    registros_procesados = []
+
     #Leer nombres de hojas de la planilla
     hojas_planilla = planilla.sheet_names()
 
@@ -340,6 +343,20 @@ def procesar_planilla(planilla, hoja_salida, bloques, atributos, output_row, set
             registro_actual.set_datos_basicos(fila_actual[settings.bi:settings.bf+1])
             registro_actual.set_parte_teorica(fila_actual[settings.ti:settings.tf+1], settings.semanas)
             registro_actual.set_parte_practica(fila_actual[settings.pi:settings.pf+1], settings.semanas)
+
+            #Omitir fila si no trae campos obligatorios: curriculum, jornada, nivel, siglas o asignatura
+            if registro_actual.curriculum == '' or registro_actual.jornada == '' or registro_actual.nivel == 0 \
+               or registro_actual.siglas == '' or registro_actual.asignatura == '':
+                print("Fila {} omitida por no tener campos obligatorios".format(current_row))
+                continue
+            else: 
+                #Omitir fila si ya se proceso una fila con igual curriculum-jornada-asignatura
+                clave = registro_actual.curriculum + '-' + registro_actual.jornada + '-' + registro_actual.siglas
+                if clave in registros_procesados:
+                    print("Fila {} omitida por duplicidad de Curriculum-Jornada-Asignatura ({})".format(current_row, clave))
+                    continue
+                else:
+                    registros_procesados.append(clave)
 
             filas_salida = procesar_fila(registro_actual, settings, atributos, bloques, optativo)
             # if len(filas_salida) > 0 and optativo == 1:
@@ -387,8 +404,8 @@ def main(argv = None):
 
     #Procesamiento de planilla de optativos (si existe)
     if settings.optativos != '':
-        print settings.optativos
         planilla_optativos = xlrd.open_workbook(settings.optativos, encoding_override='LATIN1')
+        print('\nPlanilla de optativos: {}'.format(settings.optativos))
         output_row = procesar_planilla(planilla_optativos, hoja_salida, bloques, atributos, output_row, settings, 1)
     
     #Guardar archivo de salida
