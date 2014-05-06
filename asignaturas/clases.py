@@ -283,6 +283,7 @@ class Asignatura:
         salida.append(self.num_profesores)
         salida.append(self.anual)
         salida.append(self.online)
+        salida.append(self.optativo)
 
         for sala in self.salas:
             salida.append(sala)
@@ -292,8 +293,6 @@ class Asignatura:
 
         for semana in self.semanas:
             salida.append(semana)
-
-        salida.append(self.optativo)
 
         return salida
 
