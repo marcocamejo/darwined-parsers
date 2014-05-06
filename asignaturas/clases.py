@@ -51,7 +51,7 @@ class CursoParte:
  
             #Si franja corresponde con jornada (Ej: 'V-SEM' y 'V')
             # --> Estudiar dias
-            if jornada == self.franja_horaria[0]:
+            if jornada.upper() == self.franja_horaria[0].upper():
 
                 if len(dias) == 0:
                     bloque = self.franja_horaria
@@ -62,14 +62,17 @@ class CursoParte:
                     #Si franja vespertina sab y solo aparece sabado(6) --> OK
                     if self.franja_horaria == 'V-SAB' and dias == '6':
                         bloque = self.franja_horaria + '-' + dias
+                    #Si franja diurna (manana o tarde) y no aparece sabado(6) --> OK
+                    if (self.franja_horaria == 'D-MAN' or self.franja_horaria == 'D-TAR') and '6' not in dias:
+                        bloque = self.franja_horaria + '-' + dias
 
         #Caso 2: Franja Vacia
         else:
-            if len(dias) == 0:
-                bloque = jornada
-            elif len(dias) > 0:
+            if len(dias) > 0:
                 if (jornada == 'V') or (jornada == 'D' and '6' not in dias):
                     bloque = jornada + '-' + dias
+            #elif len(dias) == 0:
+            #    bloque = jornada
 
         return bloque.encode('utf-8')
 
@@ -313,6 +316,7 @@ class Asignatura:
         salida.append('NUM PROFESORES')
         salida.append('ANUAL')
         salida.append('ONLINE')
+        salida.append('OPTATIVO')
 
         for clave, valor in salas:
             salida.append(valor)
@@ -322,8 +326,6 @@ class Asignatura:
 
         for i in range(0,semanas):
             salida.append('S'+str(i+1))
-
-        salida.append('OPTATIVO')
 
         return salida
 

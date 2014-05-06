@@ -266,7 +266,7 @@ def escribir_encabezado(arreglo, bloques, salas, semanas, hoja, fila):
     style2.pattern = pattern2
     style2.font    = font2
     pi = 10
-    pf = 17
+    pf = 18
     escribir_arreglo(arreglo[pi:pf], hoja, fila, pi, style2)
 
     #Bloque 3: Atributos de sala
@@ -279,7 +279,7 @@ def escribir_encabezado(arreglo, bloques, salas, semanas, hoja, fila):
     style4         = xlwt.XFStyle()
     style4.pattern = pattern4
     style4.font    = font4
-    pi = 17
+    pi = 18
     pf = pi + len(salas)
     escribir_arreglo(arreglo[pi:pf], hoja, fila, pi, style4)
 
@@ -310,21 +310,6 @@ def escribir_encabezado(arreglo, bloques, salas, semanas, hoja, fila):
     pi = pf
     pf = pi + semanas
     escribir_arreglo(arreglo[pi:pf], hoja, fila, pi, style5)
-
-    #Bloque 6: Optativo
-    font6       = xlwt.Font()
-    font6.bold  = True
-    font6.color = 'color white'
-    pattern6 = xlwt.Pattern()
-    pattern6.pattern = xlwt.Pattern.SOLID_PATTERN
-    pattern6.pattern_fore_colour = xlwt.Style.colour_map['yellow']
-    style6         = xlwt.XFStyle()
-    style6.pattern = pattern6
-    style6.font    = font6
-    pi = pf
-    pf = pi + 1
-    escribir_arreglo(arreglo[pi:pf], hoja, fila, pi, style6)
-
 
 def procesar_planilla(planilla, hoja_salida, bloques, atributos, output_row, settings, optativo):
     """ Procesa una planilla de plan de estudio o de optativos"""
