@@ -347,13 +347,13 @@ def procesar_planilla(planilla, hoja_salida, bloques, atributos, output_row, set
             #Omitir fila si no trae campos obligatorios: curriculum, jornada, nivel, siglas o asignatura
             if registro_actual.curriculum == '' or registro_actual.jornada == '' or registro_actual.nivel == 0 \
                or registro_actual.siglas == '' or registro_actual.asignatura == '':
-                print("Fila {} omitida por no tener campos obligatorios".format(current_row))
+                print("Fila {} omitida por no tener campos obligatorios".format(current_row+1))
                 continue
             else: 
                 #Omitir fila si ya se proceso una fila con igual curriculum-jornada-asignatura
                 clave = registro_actual.curriculum + '-' + registro_actual.jornada + '-' + registro_actual.siglas
                 if clave in registros_procesados:
-                    print("Fila {} omitida por duplicidad de Curriculum-Jornada-Asignatura ({})".format(current_row, clave))
+                    print("Fila {} omitida por duplicidad de Curriculum-Jornada-Asignatura ({})".format(current_row+1, clave))
                     continue
                 else:
                     registros_procesados.append(clave)
