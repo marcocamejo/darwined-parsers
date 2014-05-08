@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import time
 import optparse
 import ConfigParser
 import xlrd
@@ -314,11 +315,18 @@ def escribir_encabezado(arreglo, bloques, salas, semanas, hoja, fila):
 def procesar_planilla(planilla, hoja_salida, bloques, atributos, output_row, settings, optativo):
     """ Procesa una planilla de plan de estudio o de optativos"""
 
-    #registros procesados
+    #Registros procesados
     registros_procesados = []
 
     #Leer nombres de hojas de la planilla
     hojas_planilla = planilla.sheet_names()
+
+    #Abrir archivo de log
+    log = open('log', 'a')
+    if optativo == 0:
+        log.write('\nPlanilla de Plan de Estudio\n')
+    else:
+        log.write('\nPlanilla de Optativos\n')
 
     #Procesamiento de la planilla de plan de estudio
     for worksheet_name in hojas_planilla:
@@ -327,8 +335,8 @@ def procesar_planilla(planilla, hoja_salida, bloques, atributos, output_row, set
         num_rows = worksheet.nrows
         num_cols = worksheet.ncols
 
-        print('Hoja: {}'.format(worksheet_name))
-        print('--Filas: {}, Columnas: {}'.format(num_rows, num_cols))
+        log.write('Hoja: '+worksheet_name+'\n')
+        log.write('--Filas: '+str(num_rows)+', Columnas: '+str(num_cols)+'\n')
 
         #se leen filas de hoja (omitiendo las primeras 3 filas de encabezado)
         for current_row in range(3, num_rows):
@@ -347,13 +355,13 @@ def procesar_planilla(planilla, hoja_salida, bloques, atributos, output_row, set
             #Omitir fila si no trae campos obligatorios: curriculum, jornada, nivel, siglas o asignatura
             if registro_actual.curriculum == '' or registro_actual.jornada == '' or registro_actual.nivel == 0 \
                or registro_actual.siglas == '' or registro_actual.asignatura == '':
-                print("Fila {} omitida por no tener campos obligatorios".format(current_row+1))
+                log.write("Fila "+str(current_row+1)+" omitida por no tener campos obligatorios\n")
                 continue
             else: 
                 #Omitir fila si ya se proceso una fila con igual curriculum-jornada-asignatura
                 clave = registro_actual.curriculum + '-' + registro_actual.jornada + '-' + registro_actual.siglas
                 if clave in registros_procesados:
-                    print("Fila {} omitida por duplicidad de Curriculum-Jornada-Asignatura ({})".format(current_row+1, clave))
+                    log.write('Fila '+str(current_row+1)+' omitida por duplicidad de Curriculum-Jornada-Asignatura ('+clave+')\n')
                     continue
                 else:
                     registros_procesados.append(clave)
@@ -367,6 +375,8 @@ def procesar_planilla(planilla, hoja_salida, bloques, atributos, output_row, set
             for rw in filas_salida:
                 escribir_arreglo(rw.export_list(), hoja_salida, output_row)
                 output_row = output_row + 1
+
+    log.close()
 
     return output_row
 
@@ -389,6 +399,11 @@ def main(argv = None):
     #Crear hoja de archivo de salida
     hoja_salida = salida.add_sheet('Sheet1')
 
+    #Crear archivo de log
+    log = open("log", "w")
+    log.write(time.strftime("Archivo generado el: %d/%m/%Y - %H:%M:%S\n\n"))
+    log.close()
+
     #Preprocesamiento de la planilla: leer bloques
     bloques = leer_bloques(planilla, settings, atributos)
 
@@ -405,7 +420,6 @@ def main(argv = None):
     #Procesamiento de planilla de optativos (si existe)
     if settings.optativos != '':
         planilla_optativos = xlrd.open_workbook(settings.optativos, encoding_override='LATIN1')
-        print('\nPlanilla de optativos: {}'.format(settings.optativos))
         output_row = procesar_planilla(planilla_optativos, hoja_salida, bloques, atributos, output_row, settings, 1)
     
     #Guardar archivo de salida
