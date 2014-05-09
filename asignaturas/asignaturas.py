@@ -131,13 +131,21 @@ def leer_atributos(nombre_archivo):
 
     attr_book = xlrd.open_workbook(nombre_archivo, encoding_override='LATIN1')
 
+    log = open('log', 'a')
+
     diccionario = {}
     #Recorrer las hojas
     for s in attr_book.sheets():
         for row in range(1,s.nrows): #omitir encabezado
-            clave = s.cell(row,1).value.encode('utf-8').strip()
-            valor = s.cell(row,0).value.encode('utf-8').strip()
-            diccionario[clave] = valor
+            if s.cell(row,0).value.encode('utf-8').strip().upper() == 'SALA':
+                clave = s.cell(row,2).value.encode('utf-8').strip()
+                valor = s.cell(row,1).value.encode('utf-8').strip()
+                diccionario[clave] = valor
+            else:
+                log.write(nombre_archivo+": Fila "+str(row+1)+" no es tipo sala")
+
+    log.close()
+
     return diccionario
 
 def leer_bloques(planilla, settings, atributos):
