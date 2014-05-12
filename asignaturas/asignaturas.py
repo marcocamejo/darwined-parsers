@@ -112,6 +112,11 @@ def procesar_argumentos(argv):
         else:
             settings.semanas = 18
 
+    if cfg.has_option("basicos", "max_filas_vacias"):
+        settings.max_filas_vacias = cfg.get("basicos", "max_filas_vacias")
+    else:
+        settings.max_filas_vacias = 20
+
 
     #Normalizar argumentos
     settings.semanas = normalize_num(settings.semanas)
@@ -123,6 +128,8 @@ def procesar_argumentos(argv):
 
     settings.pi = normalize_num(settings.pi)
     settings.pf = normalize_num(settings.pf)
+
+    settings.max_filas_vacias = int(settings.max_filas_vacias)
 
     return settings, args
 
@@ -348,6 +355,9 @@ def procesar_planilla(planilla, hoja_salida, bloques, atributos, output_row, set
         #numero de registros procesados
         num_procesados = 0
 
+        #numero de registros vacios (consecutivamente)
+        num_vacios = 0
+
         log.write('Hoja: '+worksheet_name+'\n')
         log.write('--Filas: '+str(num_rows)+', Columnas: '+str(num_cols)+'\n')
 
@@ -371,9 +381,18 @@ def procesar_planilla(planilla, hoja_salida, bloques, atributos, output_row, set
             if registro_actual.curriculum == '' or registro_actual.jornada == '' or registro_actual.nivel == 0 \
                or registro_actual.siglas == '' or registro_actual.asignatura == '':
                 log.write("Fila "+str(current_row+1)+" omitida por no tener campos obligatorios\n")
+                num_vacios = num_vacios + 1
+
+                #Si se alcanza el maximo de filas vacias consecutivas permitidas: terminar hoja
+                if num_vacios == settings.max_filas_vacias:
+                    log.write('Se alcanzo el maximo permitido de filas vacias consecutivamente (' \
+                        +str(settings.max_filas_vacias)+') en la hoja '+worksheet_name+'\n')
+                    break
+
                 continue
             else: 
                 #Omitir fila si ya se proceso una fila con igual curriculum-jornada-asignatura
+                num_vacios = 0
                 clave = registro_actual.curriculum + '-' + registro_actual.jornada + '-' + registro_actual.siglas
                 if clave in registros_procesados:
                     log.write('Fila '+str(current_row+1)+' omitida por duplicidad de Curriculum-Jornada-Asignatura ('+clave+')\n')
@@ -420,7 +439,8 @@ def main(argv = None):
 
     #Crear archivo de log
     log = open("log", "w")
-    log.write(time.strftime("Archivo generado el: %d/%m/%Y - %H:%M:%S\n\n"))
+    log.write(time.strftime('Archivo generado el: %d/%m/%Y - %H:%M:%S\n'))
+    log.write('salida: '+settings.salida+'\n')
     log.close()
 
     #Preprocesamiento de la planilla: leer bloques
