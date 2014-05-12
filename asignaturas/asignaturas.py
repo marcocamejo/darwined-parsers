@@ -343,6 +343,11 @@ def procesar_planilla(planilla, hoja_salida, bloques, atributos, output_row, set
         num_rows = worksheet.nrows
         num_cols = worksheet.ncols
 
+        #numero de registros totales
+        num_registros = 0
+        #numero de registros procesados
+        num_procesados = 0
+
         log.write('Hoja: '+worksheet_name+'\n')
         log.write('--Filas: '+str(num_rows)+', Columnas: '+str(num_cols)+'\n')
 
@@ -360,6 +365,8 @@ def procesar_planilla(planilla, hoja_salida, bloques, atributos, output_row, set
             registro_actual.set_parte_teorica(fila_actual[settings.ti:settings.tf+1], settings.semanas)
             registro_actual.set_parte_practica(fila_actual[settings.pi:settings.pf+1], settings.semanas)
 
+            num_registros = num_registros+1
+
             #Omitir fila si no trae campos obligatorios: curriculum, jornada, nivel, siglas o asignatura
             if registro_actual.curriculum == '' or registro_actual.jornada == '' or registro_actual.nivel == 0 \
                or registro_actual.siglas == '' or registro_actual.asignatura == '':
@@ -371,18 +378,22 @@ def procesar_planilla(planilla, hoja_salida, bloques, atributos, output_row, set
                 if clave in registros_procesados:
                     log.write('Fila '+str(current_row+1)+' omitida por duplicidad de Curriculum-Jornada-Asignatura ('+clave+')\n')
                     continue
-                else:
-                    registros_procesados.append(clave)
 
             filas_salida = procesar_fila(registro_actual, settings, atributos, bloques, optativo)
-            # if len(filas_salida) > 0 and optativo == 1:
-            #     print 1
-            
+            if len(filas_salida) == 0:
+                log.write('Fila '+str(current_row+1)+' sin parte teorica ni practica validas\n')
+            else:
+                registros_procesados.append(clave)
+                num_procesados = num_procesados + 1
 
             #Puede existir una o 2 asignaturas (teoria y/o practica)
             for rw in filas_salida:
                 escribir_arreglo(rw.export_list(), hoja_salida, output_row)
                 output_row = output_row + 1
+
+    log.write('Total filas: '+str(num_registros)+'\n')
+    porcentaje_procesados = round(100.0*num_procesados/(num_registros), 2)
+    log.write('Total filas procesadas: '+str(num_procesados)+' ('+str(porcentaje_procesados)+'%)\n')
 
     log.close()
 
