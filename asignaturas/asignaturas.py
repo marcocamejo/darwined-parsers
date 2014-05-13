@@ -46,29 +46,20 @@ def procesar_argumentos(argv):
         help="Regimen")
     parser.add_option("-w", "--semanas", dest="semanas",
         help="Semanas planificadas por curso")
+    parser.add_option("-c", "--config", dest="config",
+        help="Archivo de configuracion")
 
     #Cargar parametros recibidos
     settings, args = parser.parse_args(argv)
 
     #Cargar datos de archivo de configuracion
+    if settings.config:
+        config_file = settings.config
+    else:
+        config_file = "asignaturas.cfg"
+
     cfg = ConfigParser.ConfigParser()
     cfg.read(["asignaturas.cfg"])
-
-    if not (cfg.has_option("indices", "bi") and cfg.has_option("indices", "bf")
-        and cfg.has_option("indices", "ti") and cfg.has_option("indices", "tf")
-        and cfg.has_option("indices", "pi") and cfg.has_option("indices", "pf")
-    ):
-        parser.error("El archivo de configuracion esta incompleto.")
-
-    #Indices de datos basicos
-    settings.bi = cfg.get("indices", "bi")
-    settings.bf = cfg.get("indices", "bf")
-    #Indices de parte teorica
-    settings.ti = cfg.get("indices", "ti")
-    settings.tf = cfg.get("indices", "tf")
-    #Indices de parte practica
-    settings.pi = cfg.get("indices", "pi")
-    settings.pf = cfg.get("indices", "pf")
 
     #Verificar argumentos
     if not settings.entrada:
@@ -112,24 +103,29 @@ def procesar_argumentos(argv):
         else:
             settings.semanas = 18
 
+    #Fila inicial de lectura de datos (= numero de filas a omitir)
+    if cfg.has_option("basicos", "ini_filas"):
+        settings.ini_filas = cfg.get("basicos", "ini_filas")
+    else:
+        settings.ini_filas = 3 #por omision se omiten 3 filas de encabezado
+
+    #Columna inicial de lectura de datos (= numero de columnas a omitir)
+    if cfg.has_option("basicos", "ini_columnas"):
+        settings.ini_columnas = cfg.get("basicos", "ini_columnas")
+    else:
+        settings.ini_columnas = 0 #por omision no se omiten columnas
+
+    #Maximo numero de filas vacias consecutivas permitidas
     if cfg.has_option("basicos", "max_filas_vacias"):
         settings.max_filas_vacias = cfg.get("basicos", "max_filas_vacias")
     else:
         settings.max_filas_vacias = 20
 
-
     #Normalizar argumentos
-    settings.semanas = normalize_num(settings.semanas)
-    settings.bi  = normalize_num(settings.bi)
-    settings.bf  = normalize_num(settings.bf)
-
-    settings.ti  = normalize_num(settings.ti)
-    settings.tf  = normalize_num(settings.tf)
-
-    settings.pi = normalize_num(settings.pi)
-    settings.pf = normalize_num(settings.pf)
-
-    settings.max_filas_vacias = int(settings.max_filas_vacias)
+    settings.semanas          = normalize_num(settings.semanas)
+    settings.ini_filas        = normalize_num(settings.ini_filas)
+    settings.ini_columnas     = normalize_num(settings.ini_columnas)
+    settings.max_filas_vacias = normalize_num(settings.max_filas_vacias)
 
     return settings, args
 
@@ -171,7 +167,7 @@ def leer_bloques(planilla, settings, atributos):
         num_cols = worksheet.ncols
 
         #se leen filas de hoja
-        for current_row in range(3, num_rows):
+        for current_row in range(settings.ini_filas, num_rows):
 
             fila_actual = []
 
@@ -180,9 +176,7 @@ def leer_bloques(planilla, settings, atributos):
                 fila_actual.append(normalize_str(worksheet.cell(current_row, current_col).value))
 
             registro_actual = Registro()
-            registro_actual.set_datos_basicos(fila_actual[settings.bi:settings.bf+1])
-            registro_actual.set_parte_teorica(fila_actual[settings.ti:settings.tf+1], settings.semanas)
-            registro_actual.set_parte_practica(fila_actual[settings.pi:settings.pf+1], settings.semanas)
+            registro_actual.set_from_list(fila_actual, settings)
 
             bloque_teorico, bloque_practico = registro_actual.procesar_bloques(atributos)
             if len(bloque_teorico) > 0:
@@ -362,7 +356,7 @@ def procesar_planilla(planilla, hoja_salida, bloques, atributos, output_row, set
         log.write('--Filas: '+str(num_rows)+', Columnas: '+str(num_cols)+'\n')
 
         #se leen filas de hoja (omitiendo las primeras 3 filas de encabezado)
-        for current_row in range(3, num_rows):
+        for current_row in range(settings.ini_filas, num_rows):
 
             fila_actual = []
 
@@ -371,9 +365,7 @@ def procesar_planilla(planilla, hoja_salida, bloques, atributos, output_row, set
                 fila_actual.append(normalize_str(worksheet.cell(current_row, current_col).value))
 
             registro_actual = Registro()
-            registro_actual.set_datos_basicos(fila_actual[settings.bi:settings.bf+1])
-            registro_actual.set_parte_teorica(fila_actual[settings.ti:settings.tf+1], settings.semanas)
-            registro_actual.set_parte_practica(fila_actual[settings.pi:settings.pf+1], settings.semanas)
+            registro_actual.set_from_list(fila_actual, settings)
 
             num_registros = num_registros+1
 

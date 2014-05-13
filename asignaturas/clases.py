@@ -121,7 +121,17 @@ class Registro:
         self.parte_teorica  = CursoParte()
         self.parte_practica = CursoParte()
 
-    def set_datos_basicos(self, entrada):
+    def set_from_list(self, entrada, settings):
+        """ Inicializa el objeto a partir de una lista de atributos
+
+            Si el orden de las columnas en la planilla de entrada cambia, es aqui
+            donde se debe cambiar el orden de lectura de datos.
+            Este algoritmo asume que los datos estan todos contiguos, comenzando
+            con el bloque de datos basicos (que abarca 7 columnas), seguido por
+            el bloque de parte teorica (que abarca 10 columnas mas una columna
+            por cada semana) y finalmente la parte practica (igual dimension que)
+            la parte teorica.
+        """
         self.curriculum = normalize_str(entrada[0])
         self.jornada    = normalize_str(entrada[1])
         self.nivel      = normalize_num(entrada[2])
@@ -129,6 +139,17 @@ class Registro:
         self.asignatura = normalize_str(entrada[4])
         self.creditos   = normalize_num(entrada[5])
         self.horas      = normalize_num(entrada[6])
+
+        # datos basicos:  7 columnas
+        # datos teoria:   10 columnas + semanas
+        # datos practica: 10 columnas + semanas
+        ti = settings.ini_columnas + 7
+        tf = ti + 10 + settings.semanas
+        pi = tf
+        pf = pi + 10 + settings.semanas
+
+        self.set_parte_teorica(entrada[ti:tf], settings.semanas)
+        self.set_parte_practica(entrada[pi:pf], settings.semanas)
 
     def set_parte_teorica(self, entrada, semanas):
         i_semanas = len(entrada)-semanas
@@ -158,7 +179,6 @@ class Registro:
             bloque_practico = self.parte_practica.get_bloque(self.jornada)
 
         return bloque_teorico, bloque_practico
-
 
 
 
