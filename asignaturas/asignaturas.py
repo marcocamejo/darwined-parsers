@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+import os
 import sys
 import time
 import optparse
@@ -30,6 +30,8 @@ def procesar_argumentos(argv):
     parser = optparse.OptionParser()
 
     #Definir opciones (argumentos) esperados
+    parser.add_option("-l", "--log", dest="log",
+        help="Ruta del archivo de log")
     parser.add_option("-i","--input", dest="entrada",
         help="Ruta del archivo de entrada")
     parser.add_option("-p","--optativos", dest="optativos",
@@ -62,6 +64,11 @@ def procesar_argumentos(argv):
     cfg.read(["asignaturas.cfg"])
 
     #Verificar argumentos
+    if not settings.log:
+        if cfg.has_option("archivos", "log"):
+            settings.log = cfg.get("archivos", "log")
+        else:
+            parser.error('No se ha especificado un archivo de entrada')
     if not settings.entrada:
         if cfg.has_option("archivos", "entrada"):
             settings.entrada = cfg.get("archivos", "entrada")
@@ -129,12 +136,12 @@ def procesar_argumentos(argv):
 
     return settings, args
 
-def leer_atributos(nombre_archivo):
+def leer_atributos(settings):
     """ Leer archivo de atributos de sala"""
 
-    attr_book = xlrd.open_workbook(nombre_archivo, encoding_override='LATIN1')
+    attr_book = xlrd.open_workbook(settings.atributos, encoding_override='LATIN1')
 
-    log = open('log', 'a')
+    log = open(settings.log, 'a')
 
     diccionario = {}
     #Recorrer las hojas
@@ -331,7 +338,7 @@ def procesar_planilla(planilla, hoja_salida, bloques, atributos, output_row, set
     hojas_planilla = planilla.sheet_names()
 
     #Abrir archivo de log
-    log = open('log', 'a')
+    log = open(settings.log, 'a')
     if optativo == 0:
         log.write('\nPlanilla de Plan de Estudio\n')
     else:
@@ -415,11 +422,17 @@ def main(argv = None):
 
     settings, args = procesar_argumentos(argv)
 
+    # Crear los paths de los archivos de salida y log si no existen
+    if not os.path.exists(os.path.dirname(settings.log)):
+        os.makedirs(os.path.dirname(settings.log))
+    if not os.path.exists(os.path.dirname(settings.salida)):
+        os.makedirs(os.path.dirname(settings.salida))
+
     #Leer planilla
     planilla = xlrd.open_workbook(settings.entrada, encoding_override='LATIN1')
 
     #Leer archivo de atributos
-    atributos = leer_atributos(settings.atributos)
+    atributos = leer_atributos(settings)
     lista_atributos = atributos.items()
     lista_atributos.sort(key= lambda tup: tup[1])
 
@@ -430,7 +443,7 @@ def main(argv = None):
     hoja_salida = salida.add_sheet('Sheet1')
 
     #Crear archivo de log
-    log = open("log", "w")
+    log = open(settings.log, "w")
     log.write(time.strftime('Archivo generado el: %d/%m/%Y - %H:%M:%S\n'))
     log.write('salida: '+settings.salida+'\n')
     log.close()

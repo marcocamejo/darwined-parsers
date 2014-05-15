@@ -133,7 +133,7 @@ class Registro:
             la parte teorica.
         """
         self.curriculum = normalize_str(entrada[0])
-        self.jornada    = normalize_str(entrada[1])
+        self.jornada    = normalize_str(entrada[1]).upper()
         self.nivel      = normalize_num(entrada[2])
         self.siglas     = normalize_str(entrada[3])
         self.asignatura = normalize_str(entrada[4])
@@ -221,7 +221,7 @@ class Asignatura:
         self.carrera      = registro.curriculum
         self.plan_estudio = registro.curriculum
         self.regimen      = settings.regimen
-        self.jornada      = registro.jornada
+        self.jornada      = registro.jornada.upper()
         self.codigo       = registro.siglas
         self.asignatura   = registro.asignatura
         self.nivel        = registro.nivel
