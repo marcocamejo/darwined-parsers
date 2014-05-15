@@ -1,3 +1,4 @@
+import os
 import sys
 import optparse
 import ConfigParser
@@ -27,6 +28,8 @@ def procesar_argumentos(argv):
     parser = optparse.OptionParser()
 
     #Definir opciones (argumentos) esperados
+    parser.add_option("-l", "--log", dest="log",
+        help="Ruta del archivo de log")
     parser.add_option("-i","--input", dest="entrada",
         help="Ruta del archivo de entrada")
     parser.add_option("-f", "--referencias", dest="referencias",
@@ -41,15 +44,33 @@ def procesar_argumentos(argv):
         help="Regimen")
     parser.add_option("-w", "--semanas", dest="semanas",
         help="Semanas planificadas por curso")
+    parser.add_option("-c", "--config", dest="config",
+        help="Archivo de configuracion")
 
     #Cargar parametros recibidos
     settings, args = parser.parse_args(argv)
 
+    # Se toma el primer argumento (no parametro) como el directorio base
+    if len(args) > 0:
+        settings.dir = args[0]
+    else:
+        settings.dir = ''
+
     #Cargar datos de archivo de configuracion
+    if settings.config:
+        config_file = settings.dir+settings.config
+    else:
+        config_file = settings.dir+"demandas.cfg"
+
     cfg = ConfigParser.ConfigParser()
-    cfg.read(["demandas.cfg"])
+    cfg.read([config_file])
 
     #Verificar argumentos
+    if not settings.log:
+        if cfg.has_option("archivos", "log"):
+            settings.log = cfg.get("archivos", "log")
+        else:
+            parser.error('No se ha especificado un archivo de entrada')
     if not settings.entrada:
         if cfg.has_option("archivos", "entrada"):
             settings.entrada = cfg.get("archivos", "entrada")
@@ -87,6 +108,11 @@ def procesar_argumentos(argv):
             settings.semanas = 18
 
     settings.semanas = normalize_num(settings.semanas)
+
+    settings.log       = settings.dir+settings.log
+    settings.entrada   = settings.dir+settings.entrada
+    settings.salida    = settings.dir+settings.salida
+    settings.referencias = settings.dir+settings.referencias
 
     return settings, args
 
@@ -231,6 +257,12 @@ def escribir_encabezado(arreglo, hoja, fila):
 def main(argv = None):
 
     settings, args = procesar_argumentos(argv)
+
+    # Crear los paths de los archivos de salida y log si no existen
+    if not os.path.exists(os.path.dirname(settings.log)):
+        os.makedirs(os.path.dirname(settings.log))
+    if not os.path.exists(os.path.dirname(settings.salida)):
+        os.makedirs(os.path.dirname(settings.salida))
 
     #Leer planilla
     planilla = xlrd.open_workbook(settings.entrada, encoding_override='LATIN1')
